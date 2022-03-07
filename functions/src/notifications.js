@@ -5,24 +5,60 @@ admin.initializeApp(functions.config().firebase);
 
 exports.newMessageNotification = functions.firestore
   .document('/rooms/{roomId}/messages/{messageId}')
-  .onCreate((change, context) => {
-    functions.logger.info(change, context);
+  .onCreate(async (change, context) => {
+    const changeData = change.data();
 
-    admin.firestore().doc(`/rooms/${context.params.roomId}`).get().then();
+    const room = await admin
+      .firestore()
+      .collection('rooms')
+      .doc(context.params.roomId)
+      .get()
+      .then((roomDoc) => {
+        return roomDoc.data();
+      });
 
-    admin
-      .messaging()
-      .sendToDevice(
-        [
-          'dcEpPjk4TzCua8LrNuzQ7S:APA91bGoS0C03nbX4UoA7zKQ-kDyCAtrnXt5LI63xONR0HBVtzO1D51Bnn_dM2JX84j2xxaR0uZapVSl7HUEBt8MytdMFzcnW8m3ezYoMeZGPJTfGI2vpjNgs34cbi6rkAx7yJARKrfb',
-        ],
-        {
-          notification: {
-            title: 'test title',
-          },
-          data: {
-            title: 'Test Title BODY',
-          },
-        }
-      );
+    const author = await admin
+      .firestore()
+      .collection('users')
+      .doc(changeData.authorId)
+      .get()
+      .then((authorDoc) => {
+        return authorDoc.data();
+      });
+
+    const userIds = room.userIds.filter((id) => id != changeData.authorId);
+    const devices = (
+      await Promise.all(
+        userIds.map(async (uid) =>
+          admin
+            .firestore()
+            .collection('users')
+            .doc(uid)
+            .get()
+            .then((userDoc) => {
+              const userData = userDoc.data();
+              const userDevices = userData.devices;
+
+              return userDevices;
+            })
+        )
+      )
+    ).flat();
+
+    functions.logger.info(changeData.text, devices);
+
+    return admin.messaging().sendToDevice(devices, {
+      notification: {
+        title: author.firstName,
+        body: changeData.text,
+      },
+      data: {
+        title: 'new_message',
+        body: JSON.stringify({
+          room: context.params.roomId,
+          author: changeData.authorId,
+          text: changeData.text,
+        }),
+      },
+    });
   });
