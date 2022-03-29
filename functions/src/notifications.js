@@ -1,8 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
-admin.initializeApp(functions.config().firebase);
-
 exports.newMessageNotification = functions.firestore
   .document('/rooms/{roomId}/messages/{messageId}')
   .onCreate(async (change, context) => {
@@ -44,8 +42,6 @@ exports.newMessageNotification = functions.firestore
         )
       )
     ).flat();
-
-    functions.logger.info(changeData.text, devices);
 
     return admin.messaging().sendToDevice(devices, {
       notification: {
