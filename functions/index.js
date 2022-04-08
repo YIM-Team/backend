@@ -14,3 +14,4 @@ exports.changeMessageStatus = chat.changeMessageStatus;
 exports.changeLastMessage = chat.changeLastMessage;
 
 exports.newMessageNotification = notifications.newMessageNotification;
+exports.newNewsNotification = notifications.newNewsNotification;

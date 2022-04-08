@@ -58,3 +58,26 @@ exports.newMessageNotification = functions.firestore
       },
     });
   });
+
+exports.newNewsNotification = functions.firestore
+  .document('/News/{newsId}')
+  .onCreate(async (change, context) => {
+    const changeData = change.data();
+
+    functions.logger.log(changeData);
+
+    return admin.messaging().sendToTopic('news', {
+      notification: {
+        title: 'YiM News',
+        body: changeData.title['de'],
+      },
+      data: {
+        title: 'new_news',
+        body: JSON.stringify({
+          newsId: context.params.newsId,
+          title: changeData.title['de'],
+          text: changeData.text['de'],
+        }),
+      },
+    });
+  });
