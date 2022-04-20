@@ -8,6 +8,7 @@ const notifications = require('./src/notifications');
 
 exports.helloWorld = utils.helloWorld;
 exports.dataPrivacy = utils.dataPrivacy;
+exports.deleteAccount = utils.deleteAccount;
 exports.setFirestoreNullValue = utils.setFirestoreNullValue;
 
 exports.changeMessageStatus = chat.changeMessageStatus;
