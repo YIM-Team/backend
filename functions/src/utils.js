@@ -12,7 +12,7 @@ exports.dataPrivacy = functions.https.onRequest((_request, response) => {
 
   axios
       .get(
-          "https://firebasestorage.googleapis.com/v0/b/yimapp-21d84.appspot.com/o/Files%2Fdata-privacy_de.md?alt=media&token=53af3a84-9ca5-4d14-8682-2a3ce964ba9f",
+          "https://firebasestorage.googleapis.com/v0/b/yimapp-21d84.appspot.com/o/Files%2Fdata-privacy_de.md?alt=media&token=93c627b4-40fd-477e-ae59-834cecac5d87",
       )
       .then((res) => {
         functions.logger.log(res.data);
