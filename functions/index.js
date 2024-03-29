@@ -1,18 +1,21 @@
-const admin = require("firebase-admin");
-const functions = require("firebase-functions");
-admin.initializeApp(functions.config().firebase);
+const admin = require('firebase-admin')
+const functions = require('firebase-functions')
+const { setGlobalOptions } = require('firebase-functions/v2')
+admin.initializeApp(functions.config().firebase)
 
-const utils = require("./src/utils");
-const chat = require("./src/chat");
-const notifications = require("./src/notifications");
+const utils = require('./src/utils')
+const chat = require('./src/chat')
+const notifications = require('./src/notifications')
 
-exports.helloWorld = utils.helloWorld;
-exports.dataPrivacy = utils.dataPrivacy;
-exports.deleteAccount = utils.deleteAccount;
-exports.setFirestoreNullValue = utils.setFirestoreNullValue;
+setGlobalOptions({ region: 'europe-west1' })
 
-exports.changeMessageStatus = chat.changeMessageStatus;
-exports.changeLastMessage = chat.changeLastMessage;
+exports.helloWorld = utils.helloWorld
+exports.dataPrivacy = utils.dataPrivacy
+exports.deleteAccount = utils.deleteAccount
+exports.setFirestoreNullValue = utils.setFirestoreNullValue
 
-exports.newMessageNotification = notifications.newMessageNotification;
-exports.newNewsNotification = notifications.newNewsNotification;
+exports.changeMessageStatus = chat.changeMessageStatus
+exports.changeLastMessage = chat.changeLastMessage
+
+exports.newMessageNotification = notifications.newMessageNotification
+exports.newNewsNotification = notifications.newNewsNotification
