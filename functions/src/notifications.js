@@ -1,83 +1,108 @@
 const functions = require('firebase-functions')
-const admin = require('firebase-admin')
+const { getFirestore } = require('firebase-admin/firestore')
+const { getMessaging } = require('firebase-admin/messaging')
 const { onDocumentCreated } = require('firebase-functions/v2/firestore')
+const { logger } = require('firebase-functions')
+
+const db = getFirestore()
+const messaging = getMessaging()
 
 exports.newMessageNotification = onDocumentCreated(
-  'rooms/{roomId}/messages/{messageId}',
-  async (change, context) => {
-    const changeData = change.data()
+  {
+    path: 'rooms/{roomId}/messages/{messageId}',
+    region: 'europe-west1',
+  },
+  async (event) => {
+    try {
+      if (!event.data) {
+        logger.error('No data associated with the event')
+        return null
+      }
 
-    const room = await admin
-      .firestore()
-      .collection('rooms')
-      .doc(context.params.roomId)
-      .get()
-      .then((roomDoc) => {
-        return roomDoc.data()
-      })
+      const message = event.data.data()
+      if (!message) {
+        logger.error('Message data is empty')
+        return null
+      }
 
-    const author = await admin
-      .firestore()
-      .collection('users')
-      .doc(changeData.authorId)
-      .get()
-      .then((authorDoc) => {
-        return authorDoc.data()
-      })
+      const roomRef = db.doc(`rooms/${event.params.roomId}`)
+      const room = await roomRef.get().then((doc) => doc.data())
 
-    const userIds = room.userIds.filter((id) => id != changeData.authorId)
-    const devices = (
-      await Promise.all(
-        userIds.map(async (uid) =>
-          admin
-            .firestore()
-            .collection('users')
-            .doc(uid)
+      const authorRef = db.doc(`users/${message.authorId}`)
+      const author = await authorRef.get().then((doc) => doc.data())
+
+      const userIds = room.userIds.filter((id) => id !== message.authorId)
+      const devices = await Promise.all(
+        userIds.map(async (uid) => {
+          const userDevices = await db
+            .doc(`users/${uid}`)
             .get()
-            .then((userDoc) => {
-              const userData = userDoc.data()
-              const userDevices = userData.devices
-
-              return userDevices
+            .then((doc) => {
+              const userData = doc.data()
+              return userData.devices
             })
-        )
-      )
-    ).flat()
+          return userDevices
+        })
+      ).then((results) => results.flat())
 
-    return admin.messaging().sendToDevice(devices, {
-      notification: {
-        title: `${author.firstName} ${author.lastName ? author.lastName : ''}`,
-        body: changeData.text,
-      },
-      data: {
-        title: 'new_message',
-        body: JSON.stringify({
-          room: context.params.roomId,
-          author: changeData.authorId,
-          text: changeData.text,
-        }),
-      },
-    })
+      return messaging.sendToDevice(devices, {
+        notification: {
+          title: `${author.firstName} ${author.lastName || ''}`,
+          body: message.text,
+        },
+        data: {
+          title: 'new_message',
+          body: JSON.stringify({
+            room: event.params.roomId,
+            author: message.authorId,
+            text: message.text,
+          }),
+        },
+      })
+    } catch (error) {
+      logger.error('Error in newMessageNotification:', error)
+      throw error
+    }
   }
 )
 
-exports.newNewsNotification = onDocumentCreated('/News/{newsId}', async (change) => {
-  const changeData = change.data()
+exports.newNewsNotification = onDocumentCreated(
+  {
+    path: '/News/{newsId}',
+    region: 'europe-west1',
+  },
+  async (event) => {
+    try {
+      if (!event.data) {
+        logger.error('No data associated with the event')
+        return null
+      }
 
-  functions.logger.log(changeData)
+      const newsData = event.data.data()
+      if (!newsData) {
+        logger.error('News data is empty')
+        return null
+      }
 
-  // return admin.messaging().sendToTopic("news", {
-  //   notification: {
-  //     title: "YiM News",
-  //     body: changeData.title["de"],
-  //   },
-  //   data: {
-  //     title: "new_news",
-  //     body: JSON.stringify({
-  //       newsId: context.params.newsId,
-  //       title: changeData.title["de"],
-  //       text: changeData.text["de"],
-  //     }),
-  //   },
-  // });
-})
+      functions.logger.log(newsData)
+
+      // return admin.messaging().sendToTopic("news", {
+      //   notification: {
+      //     title: "YiM News",
+      //     body: changeData.title["de"],
+      //   },
+      //   data: {
+      //     title: "new_news",
+      //     body: JSON.stringify({
+      //       newsId: context.params.newsId,
+      //       title: changeData.title["de"],
+      //       text: changeData.text["de"],
+      //     }),
+      //   },
+      // });
+    } catch (error) {
+      logger.error('Error in newNewsNotification:', error)
+      throw error
+    }
+  }
+)

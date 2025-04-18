@@ -1,11 +1,11 @@
 const admin = require('firebase-admin')
-const functions = require('firebase-functions')
 const { setGlobalOptions } = require('firebase-functions/v2')
-admin.initializeApp(functions.config().firebase)
+admin.initializeApp()
 
 const utils = require('./src/utils')
 const chat = require('./src/chat')
 const notifications = require('./src/notifications')
+const scheduledNotifications = require('./src/notifications/scheduled')
 
 setGlobalOptions({ region: 'europe-west1' })
 
@@ -19,3 +19,7 @@ exports.changeLastMessage = chat.changeLastMessage
 
 exports.newMessageNotification = notifications.newMessageNotification
 exports.newNewsNotification = notifications.newNewsNotification
+
+// Scheduled notifications
+exports.scheduleNotification = scheduledNotifications.scheduleNotification
+exports.sendScheduledNotification = scheduledNotifications.sendScheduledNotification
