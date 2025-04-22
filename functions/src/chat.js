@@ -13,7 +13,7 @@ const db = getFirestore()
  */
 exports.changeMessageStatus = onDocumentCreated(
   {
-    path: 'rooms/{roomId}/messages/{messageId}',
+    document: 'rooms/{roomId}/messages/{messageId}',
     region: 'europe-west1',
   },
   async (event) => {
@@ -76,7 +76,7 @@ exports.changeMessageStatus = onDocumentCreated(
  */
 exports.changeLastMessage = onDocumentWritten(
   {
-    path: 'rooms/{roomId}/messages/{messageId}',
+    document: 'rooms/{roomId}/messages/{messageId}',
     region: 'europe-west1',
   },
   async (event) => {

@@ -57,7 +57,7 @@ exports.deleteAccount = onRequest(
 
 exports.setFirestoreNullValue = onDocumentWritten(
   {
-    path: 'Notes/{noteID}',
+    document: 'Notes/{noteID}',
     region: 'europe-west1',
   },
   async (event) => {

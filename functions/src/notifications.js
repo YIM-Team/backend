@@ -9,7 +9,7 @@ const messaging = getMessaging()
 
 exports.newMessageNotification = onDocumentCreated(
   {
-    path: 'rooms/{roomId}/messages/{messageId}',
+    document: 'rooms/{roomId}/messages/{messageId}',
     region: 'europe-west1',
   },
   async (event) => {
@@ -45,20 +45,26 @@ exports.newMessageNotification = onDocumentCreated(
         })
       ).then((results) => results.flat())
 
-      return messaging.sendToDevice(devices, {
-        notification: {
-          title: `${author.firstName} ${author.lastName || ''}`,
-          body: message.text,
-        },
-        data: {
-          title: 'new_message',
-          body: JSON.stringify({
-            room: event.params.roomId,
-            author: message.authorId,
-            text: message.text,
-          }),
-        },
-      })
+      // Send to each device individually using the newer send method
+      const sendPromises = devices.map(device => 
+        messaging.send({
+          token: device,
+          notification: {
+            title: `${author.firstName} ${author.lastName || ''}`,
+            body: message.text,
+          },
+          data: {
+            title: 'new_message',
+            body: JSON.stringify({
+              room: event.params.roomId,
+              author: message.authorId,
+              text: message.text,
+            }),
+          },
+        })
+      );
+      
+      return Promise.all(sendPromises);
     } catch (error) {
       logger.error('Error in newMessageNotification:', error)
       throw error
@@ -68,7 +74,7 @@ exports.newMessageNotification = onDocumentCreated(
 
 exports.newNewsNotification = onDocumentCreated(
   {
-    path: '/News/{newsId}',
+    document: '/News/{newsId}',
     region: 'europe-west1',
   },
   async (event) => {
